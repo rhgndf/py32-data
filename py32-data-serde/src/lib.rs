@@ -73,6 +73,9 @@ pub mod chip {
         pub size: u32,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub settings: Option<memory::Settings>,
+        // probe-rs needs access attributes for automated tests
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub access: Option<memory::Access>,
     }
 
     pub mod memory {
@@ -90,6 +93,13 @@ pub mod chip {
             pub page_size: u32,
             pub sector_size: u32,
             pub erase_value: u8,
+        }
+
+        #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+        pub struct Access {
+            pub read: bool,
+            pub write: bool,
+            pub execute: bool,
         }
     }
 
@@ -333,7 +343,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let path = Path::new(CHIPS_DIR).join("STM32F030C6.json");
+        let path = Path::new(CHIPS_DIR).join("PY32F071R1B.json");
         check_file(path);
     }
 
@@ -348,5 +358,30 @@ mod tests {
             .for_each(|chip| {
                 check_file(chip.unwrap().path());
             });
+    }
+
+    #[test]
+    fn test_memory_access() {
+        let memory: chip::Memory = serde_json::from_str(
+            r#"{
+                "name": "SRAM",
+                "kind": "ram",
+                "address": 536870912,
+                "size": 1024,
+                "settings": null,
+                "access": { "read": true, "write": true, "execute": false }
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(memory.kind, chip::memory::Kind::Ram);
+        assert_eq!(
+            memory.access,
+            Some(chip::memory::Access {
+                read: true,
+                write: true,
+                execute: false,
+            })
+        );
     }
 }
