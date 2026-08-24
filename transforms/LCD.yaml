@@ -1,0 +1,38 @@
+transforms:
+  # LCD_RAM0~7 are full 32-bit display RAM; LCD_RAM8~F only implement D[7:0]
+  # (RM 17.10.6 / 17.10.7). Two arrays, because the widths genuinely differ.
+  - !MergeFieldsets
+    from: RAM[0-7]
+    to: RAM
+  - !MakeRegisterArray
+    blocks: LCD
+    from: RAM[0-7]
+    to: RAM
+
+  - !MergeFieldsets
+    from: RAM(8|9|1[0-5])
+    to: RAM8
+  - !MakeRegisterArray
+    blocks: LCD
+    from: RAM(8|9|1[0-5])
+    to: RAM8
+
+  # POEN0 is 32 identical SEG output-disable bits (RM 17.10.4, "Sx").
+  - !MakeFieldArray
+    fieldsets: ^POEN0$
+    from: S\d+
+    to: S
+
+  # POEN1 bits 11:8 are the four COM output-disable bits (RM 17.10.5, "Cx").
+  - !MakeFieldArray
+    fieldsets: ^POEN1$
+    from: C\d
+    to: C
+
+# Not applied to every SVD that has an LCD:
+#  - PY32F031 has a genuinely smaller controller (RM V0.6 documents LCD_RAM0~3
+#    plus LCD_RAM4, no MUX), so the RAM8 patterns match nothing and extraction
+#    fails. DIE072 carries one model, and `Series` has no per-series register
+#    override, so F031 is modelled by the larger F07X variant.
+#  - PY32L090 / PY32T090 / PY32T092 have a different LCD altogether (CR/CSR
+#    instead of CR0/CR1). None of them is wired to a die yet.

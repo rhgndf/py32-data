@@ -143,8 +143,8 @@
   address: 0x40002400
   registers:
     kind: lcd
-    version: common
-    block: TODO
+    version: v1
+    block: LCD
   rcc:
     bus_clock: PCLK1
     kernel_clock: PCLK1
